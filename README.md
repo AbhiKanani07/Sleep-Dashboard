@@ -2,7 +2,7 @@
 Unified Fitbit + Apple Health sleep analytics with ML and explainability.
 
 ## Quickstart
-1) python -m venv .venv && .\.venv\Scripts\Activate.ps1
+1) python -m venv .venv && .\.venv\Scripts\Activate.ps1 or cmd .\.venv\Scripts\Activate.ps1
 2) pip install -r requirements.txt
 3) Optional: python train_model.py  # creates models/sleep_rf_model.pkl
 4) streamlit run dashboard.py
