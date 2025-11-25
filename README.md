@@ -13,6 +13,7 @@ Env vars (for hosted data): FITBIT_CSV_URL, APPLE_CSV_URL
 - Filters: date range, weekdays, daily/weekly/monthly grouping.
 - Exports: CSV download buttons.
 - Plotly interactivity: lines, histograms, heatmaps; SHAP bar/beeswarm if installed.
+- Upload personal csv files in sleep-dashboard\data\clean
 
 ## Deployment
 - Local: see Quickstart.
