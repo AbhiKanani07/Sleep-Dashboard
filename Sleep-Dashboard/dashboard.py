@@ -113,6 +113,9 @@ grouping = st.sidebar.selectbox("Group by", ["Daily", "Weekly", "Monthly"])
 # Apply filters
 fitbit_filt = apply_filters(fitbit, "DATE", date_range, weekdays)
 apple_filt = apply_filters(apple, "DATE", date_range, weekdays)
+# If the shared date filter wipes out Apple data (no overlap), fall back to full Apple dataset
+if apple_filt.empty:
+    apple_filt = apple.copy()
 
 
 def group_df(df: pd.DataFrame, date_col: str) -> pd.DataFrame:
