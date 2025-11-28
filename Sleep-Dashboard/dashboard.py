@@ -29,8 +29,17 @@ def load_data() -> Tuple[pd.DataFrame, pd.DataFrame]:
     fitbit_src = os.getenv("FITBIT_CSV_URL", "data/clean/fitbit_clean.csv")
     apple_src = os.getenv("APPLE_CSV_URL", "data/clean/apple_sleep_nightly_summary.csv")
 
-    fitbit = pd.read_csv(fitbit_src, parse_dates=["DATE"])
-    apple = pd.read_csv(apple_src, parse_dates=["sleep_date"])
+    try:
+        fitbit = pd.read_csv(fitbit_src, parse_dates=["DATE"])
+        apple = pd.read_csv(apple_src, parse_dates=["sleep_date"])
+    except FileNotFoundError:
+        st.error(
+            "Data files not found. Provide CSVs at "
+            "`data/clean/fitbit_clean.csv` and `data/clean/apple_sleep_nightly_summary.csv`, "
+            "or set environment variables `FITBIT_CSV_URL` and `APPLE_CSV_URL` to point to your data."
+        )
+        st.stop()
+
     apple["DATE"] = apple["sleep_date"]
     return fitbit, apple
 
