@@ -24,7 +24,7 @@ def load_data() -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Load Fitbit and Apple data.
     If env vars FITBIT_CSV_URL / APPLE_CSV_URL are set, load from those URLs (useful for hosted deploys).
-    Otherwise, load local CSVs from data/clean/ relative to this file.
+    Otherwise, load local CSVs from data/clean/ relative to this file or its parent.
     """
     app_dir = Path(__file__).resolve().parent
     data_dir = app_dir / "data" / "clean"
@@ -33,14 +33,13 @@ def load_data() -> Tuple[pd.DataFrame, pd.DataFrame]:
         val = os.getenv(env_var)
         if val:
             return val  # allow URL or custom path
-        # local default paths (current dir and parent dir fallbacks)
         local_path = data_dir / default_filename
         if local_path.exists():
             return local_path.as_posix()
         parent_path = (app_dir.parent / "data" / "clean" / default_filename)
         if parent_path.exists():
             return parent_path.as_posix()
-        return local_path.as_posix()  # return default even if missing for error message
+        return local_path.as_posix()
 
     fitbit_src = resolve_path("FITBIT_CSV_URL", "fitbit_clean.csv")
     apple_src = resolve_path("APPLE_CSV_URL", "apple_sleep_nightly_summary.csv")
@@ -393,8 +392,13 @@ if page == "Insights Summary":
 
 elif page == "Sleep Score Predictor":
     st.title("Sleep Score Predictor")
-    MODEL_PATH = Path("models/sleep_rf_model.pkl")
-    model = joblib.load(MODEL_PATH) if MODEL_PATH.exists() else None
+    app_dir = Path(__file__).resolve().parent
+    model_candidates = [
+        app_dir / "models" / "sleep_rf_model.pkl",
+        app_dir.parent / "models" / "sleep_rf_model.pkl",
+    ]
+    MODEL_PATH = next((p for p in model_candidates if p.exists()), None)
+    model = joblib.load(MODEL_PATH) if MODEL_PATH else None
     if model is None:
         st.warning("Model not found. Place your model at models/sleep_rf_model.pkl")
     else:
