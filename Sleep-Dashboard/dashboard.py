@@ -23,20 +23,37 @@ st.set_page_config(page_title="Sleep Insights Dashboard", layout="wide")
 def load_data() -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Load Fitbit and Apple data.
-    If env vars FITBIT_CSV_URL / APPLE_CSV_URL are set, load from those URLs (useful for Hugging Face Spaces).
-    Otherwise, load local CSVs under data/clean/.
+    If env vars FITBIT_CSV_URL / APPLE_CSV_URL are set, load from those URLs (useful for hosted deploys).
+    Otherwise, load local CSVs from data/clean/ relative to this file.
     """
-    fitbit_src = os.getenv("FITBIT_CSV_URL", "data/clean/fitbit_clean.csv")
-    apple_src = os.getenv("APPLE_CSV_URL", "data/clean/apple_sleep_nightly_summary.csv")
+    app_dir = Path(__file__).resolve().parent
+    data_dir = app_dir / "data" / "clean"
+
+    def resolve_path(env_var: str, default_filename: str) -> str:
+        val = os.getenv(env_var)
+        if val:
+            return val  # allow URL or custom path
+        # local default paths (current dir and parent dir fallbacks)
+        local_path = data_dir / default_filename
+        if local_path.exists():
+            return local_path.as_posix()
+        parent_path = (app_dir.parent / "data" / "clean" / default_filename)
+        if parent_path.exists():
+            return parent_path.as_posix()
+        return local_path.as_posix()  # return default even if missing for error message
+
+    fitbit_src = resolve_path("FITBIT_CSV_URL", "fitbit_clean.csv")
+    apple_src = resolve_path("APPLE_CSV_URL", "apple_sleep_nightly_summary.csv")
 
     try:
         fitbit = pd.read_csv(fitbit_src, parse_dates=["DATE"])
         apple = pd.read_csv(apple_src, parse_dates=["sleep_date"])
     except FileNotFoundError:
         st.error(
-            "Data files not found. Provide CSVs at "
-            "`data/clean/fitbit_clean.csv` and `data/clean/apple_sleep_nightly_summary.csv`, "
-            "or set environment variables `FITBIT_CSV_URL` and `APPLE_CSV_URL` to point to your data."
+            "Data files not found. Ensure these files exist in your repository:\n"
+            f"- {fitbit_src}\n"
+            f"- {apple_src}\n"
+            "Or set environment variables FITBIT_CSV_URL and APPLE_CSV_URL to point to your data."
         )
         st.stop()
 
