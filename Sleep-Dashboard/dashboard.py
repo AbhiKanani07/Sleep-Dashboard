@@ -10,7 +10,7 @@ import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 try:
     import shap
-except ImportError:
+except Exception:
     shap = None
 import streamlit as st
 
