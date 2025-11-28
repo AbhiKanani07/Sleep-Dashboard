@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Tuple, List
+from typing import Tuple, List, Optional
 
 import joblib
 import numpy as np
@@ -195,6 +195,24 @@ def fmt_range(series: pd.Series, decimals: int = 1, suffix: str = "") -> str:
     if s.empty:
         return "No data"
     return f"{s.min():.{decimals}f}{suffix} to {s.max():.{decimals}f}{suffix}"
+
+
+def resolve_model_path() -> Optional[Path]:
+    """Return the first existing model path from env var or common locations."""
+    env_path = os.getenv("MODEL_PATH")
+    if env_path:
+        candidate = Path(env_path)
+        if candidate.exists():
+            return candidate
+    app_dir = Path(__file__).resolve().parent
+    candidates = [
+        app_dir / "models" / "sleep_rf_model.pkl",
+        app_dir.parent / "models" / "sleep_rf_model.pkl",
+    ]
+    for cand in candidates:
+        if cand.exists():
+            return cand
+    return None
 
 # ---------- Sleep regularity & chronotype helpers ----------
 
@@ -392,12 +410,7 @@ if page == "Insights Summary":
 
 elif page == "Sleep Score Predictor":
     st.title("Sleep Score Predictor")
-    app_dir = Path(__file__).resolve().parent
-    model_candidates = [
-        app_dir / "models" / "sleep_rf_model.pkl",
-        app_dir.parent / "models" / "sleep_rf_model.pkl",
-    ]
-    MODEL_PATH = next((p for p in model_candidates if p.exists()), None)
+    MODEL_PATH = resolve_model_path()
     model = joblib.load(MODEL_PATH) if MODEL_PATH else None
     if model is None:
         st.warning("Model not found. Place your model at models/sleep_rf_model.pkl")
@@ -598,12 +611,12 @@ elif page == "Correlation Analysis":
 
 elif page == "Model Explainability":
     st.title("Model Explainability (SHAP)")
-    MODEL_PATH = Path("models/sleep_rf_model.pkl")
-    model = joblib.load(MODEL_PATH) if MODEL_PATH.exists() else None
+    MODEL_PATH = resolve_model_path()
+    model = joblib.load(MODEL_PATH) if MODEL_PATH else None
     if shap is None:
         st.warning("SHAP is not installed. Install `shap` to view explainability plots.")
     elif model is None:
-        st.warning("Model not found. Place your model at models/sleep_rf_model.pkl")
+        st.warning("Model not found. Place your model at models/sleep_rf_model.pkl or set MODEL_PATH.")
     else:
         st.write("This page shows which features drive the sleep score predictions.")
 
